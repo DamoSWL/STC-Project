@@ -1,2 +1,2 @@
 # STC-Project
-embeded programming project on embeded system of STC
+embeded system programming project on STC, one prevailing Microcontroller based on structure of C51 in China
