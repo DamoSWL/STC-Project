@@ -1,0 +1,186 @@
+C51 COMPILER V9.00   UART_2                                                                12/30/2014 13:33:33 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE UART_2
+OBJECT MODULE PLACED IN UART 2.OBJ
+COMPILER INVOKED BY: D:\Keil uVision C51\C51\BIN\C51.EXE UART 2.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <REG52.H>
+   2          
+   3          unsigned char code LedChar[]={0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,
+   4                                        0x7F,0x6F};
+   5          unsigned char code LedChar_Dot[]={0xBF,0x86,0xDB,0xCF,0xE6,0xED,0xFD,0x87,
+   6                                          0xFF,0xEF};
+   7          unsigned char LedBuff[]={0x00,0x00,0x00};
+   8          
+   9          void configure_uart(int baud);
+  10          void configure_timer0(int t); //input 2ms
+  11          
+  12          unsigned char num_decimal=0;
+  13          unsigned char num_integer=0;
+  14          unsigned char rxt;
+  15          unsigned char Thigh;
+  16          unsigned char Tlow;
+  17          bit running=1;
+  18          bit flag=0;
+  19          
+  20          
+  21          void main()
+  22          {
+  23   1        EA=1;
+  24   1        configure_timer0(2);
+  25   1        configure_uart(9600);
+  26   1        while(1)
+  27   1        {
+  28   2          if(flag)
+  29   2              {
+  30   3               TI=1;
+  31   3              }
+  32   2        } 
+  33   1      }
+  34          
+  35          void configure_timer0(int t)
+  36          {
+  37   1        unsigned long temp;
+  38   1      
+  39   1        temp=11059200/12;
+  40   1        temp=(temp*t)/1000;
+  41   1        temp=65536-temp;
+  42   1        temp=temp+12;
+  43   1        Thigh=(unsigned char)(temp>>8);
+  44   1        Tlow=(unsigned char)temp;
+  45   1        TH0=Thigh;
+  46   1        TL0=Tlow;
+  47   1        TMOD&=0xF0;
+  48   1        TMOD|=0x01;
+  49   1        ET0=1;
+  50   1        TR0=1;
+  51   1      }
+  52          
+  53          void configure_uart(int baud)
+  54          {
+  55   1        unsigned long temp;
+C51 COMPILER V9.00   UART_2                                                                12/30/2014 13:33:33 PAGE 2   
+
+  56   1      
+  57   1        SCON=0x50;
+  58   1        TMOD&=0x0F;
+  59   1        TMOD|=0x20;
+  60   1        temp=11059200/(24*16);
+  61   1        temp=temp/baud;
+  62   1        TH1=256-(unsigned char)temp;
+  63   1        TL1=TH1;
+  64   1        ET1=0;
+  65   1        ES=1;
+  66   1        TR1=1;
+  67   1      }
+  68          
+  69          void counting()
+  70          {
+  71   1        if(running)
+  72   1        {
+  73   2          num_decimal++;
+  74   2          if(num_decimal>=100)
+  75   2          {
+  76   3            num_decimal=0;
+  77   3                num_integer++;
+  78   3                if(num_integer>=10)
+  79   3            {
+  80   4                  num_integer=0;
+  81   4                      flag=1;
+  82   4                }
+  83   3          }
+  84   2               LedBuff[2]=LedChar[num_decimal%10];
+  85   2           LedBuff[1]=LedChar[(num_decimal/10)%10];
+  86   2           LedBuff[0]=LedChar_Dot[num_integer];
+  87   2              
+  88   2        }
+  89   1        else
+  90   1        {}
+  91   1      }
+  92          
+  93          void LedScan()
+  94          {
+  95   1        static unsigned char i=3;
+  96   1                                                      
+  97   1        P0=0x00;
+  98   1        P1&=0xF0;
+  99   1        P1|=0x01;
+ 100   1        P1=P1<<i;
+ 101   1        P0=LedBuff[i-1];
+ 102   1        i--;
+ 103   1        if(i<=0)
+ 104   1          i=3;
+ 105   1      }
+ 106          
+ 107          
+ 108          void interrupt_timer0() interrupt 1
+ 109          {
+ 110   1          static unsigned char i=0;    
+ 111   1      
+ 112   1              TH0=Thigh;
+ 113   1              TL0=Tlow;
+ 114   1              LedScan();
+ 115   1              i++;
+ 116   1              if(i>=5)
+ 117   1              {
+C51 COMPILER V9.00   UART_2                                                                12/30/2014 13:33:33 PAGE 3   
+
+ 118   2                i=0;
+ 119   2                counting();     
+ 120   2              }
+ 121   1      }
+ 122          
+ 123          void interrupt_uart() interrupt 4
+ 124          {
+ 125   1        if(RI)
+ 126   1        {
+ 127   2          RI=0;
+ 128   2          rxt=SBUF;
+ 129   2              if(rxt=='s')
+ 130   2                {
+ 131   3                  running=1;
+ 132   3                      SBUF=0x31;
+ 133   3                 }
+ 134   2              else if(rxt=='r')
+ 135   2                {
+ 136   3                  running=0;
+ 137   3                      SBUF=0X30;
+ 138   3                }
+ 139   2              else
+ 140   2              {}
+ 141   2         }
+ 142   1        if(TI)
+ 143   1        {
+ 144   2          TI=0;
+ 145   2              if(flag)
+ 146   2              {
+ 147   3                flag=0;
+ 148   3                SBUF=0x77;
+ 149   3              }
+ 150   2        }
+ 151   1      }
+ 152          
+ 153          
+ 154          
+ 155          
+ 156          
+ 157          
+ 158          
+ 159          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    438    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     10       8
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

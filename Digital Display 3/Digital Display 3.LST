@@ -1,0 +1,103 @@
+C51 COMPILER V9.00   DIGITAL_DISPLAY_3                                                     12/24/2014 14:49:11 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE DIGITAL_DISPLAY_3
+OBJECT MODULE PLACED IN Digital Display 3.OBJ
+COMPILER INVOKED BY: D:\Keil uVision C51\C51\BIN\C51.EXE Digital Display 3.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include<reg52.h>
+   2          
+   3          unsigned char code LedChar[]={0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,
+   4                                        0x7F,0x6F};
+   5          unsigned char code LedChar_Dot[]={0xBF,0x86,0xDB,0xCF,0xE6,0xED,0xFD,0x87,
+   6                                          0xFF,0xEF};
+   7          unsigned char LedBuff[]={0x00,0x3F,0x3F};
+   8          
+   9          sbit Led1=P1^1;
+  10          sbit Led2=P1^2;
+  11          sbit Led3=P1^3;
+  12          
+  13          unsigned char cnt=0;
+  14          unsigned char i=0;
+  15          
+  16          void main()
+  17          {
+  18   1        unsigned char t1=0;
+  19   1        unsigned char t2=0;
+  20   1        unsigned char t3=0;
+  21   1        Led1=1;
+  22   1        Led2=1;
+  23   1        Led3=1;
+  24   1        TMOD=0x01;       //Timer1
+  25   1        TH0=0xF7;               //2.5ms
+  26   1        TL0=0x00;
+  27   1        EA=1;
+  28   1        ET0=1;
+  29   1        TR0=1;
+  30   1      
+  31   1        while(1)
+  32   1        {
+  33   2          if(cnt>=40)   //0.1s
+  34   2              {
+  35   3                cnt=0;
+  36   3                t1++;
+  37   3                if(t1>=10)
+  38   3                {
+  39   4                   t1=0; 
+  40   4                       t2++;
+  41   4                       if(t2>=10)
+  42   4                       {
+  43   5                         t2=0;
+  44   5                         t3++;
+  45   5                         if(t3>=6)
+  46   5                         {
+  47   6                           t3=0;
+  48   6                         }
+  49   5                         if(t3==0)
+  50   5                         {
+  51   6                           LedBuff[0]=0x00;
+  52   6                         }
+  53   5                         else
+  54   5                         {
+  55   6                           LedBuff[0]=LedChar[t3];
+C51 COMPILER V9.00   DIGITAL_DISPLAY_3                                                     12/24/2014 14:49:11 PAGE 2   
+
+  56   6                         }
+  57   5                       }
+  58   4                       LedBuff[1]=LedChar_Dot[t2];
+  59   4                }
+  60   3                LedBuff[2]=LedChar[t1];
+  61   3              }       
+  62   2        }
+  63   1      }
+  64          
+  65          void InterruptTimer0() interrupt 1
+  66          {
+  67   1        TH0=0xF7;
+  68   1        TL0=0x00;
+  69   1        cnt++;
+  70   1        P0=0x00;
+  71   1        switch(i)
+  72   1        {
+  73   2          case 0:Led3=1;Led1=0;Led2=0;P0=LedBuff[2];i++;break;
+  74   2              case 1:Led2=1;Led1=0;Led3=0;P0=LedBuff[1];i++;break;
+  75   2              case 2:Led1=1;Led2=0;Led3=0;P0=LedBuff[0];i=0;break;
+  76   2              default:break;
+  77   2        }
+  78   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    158    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      5    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

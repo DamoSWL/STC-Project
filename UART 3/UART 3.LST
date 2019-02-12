@@ -1,0 +1,209 @@
+C51 COMPILER V9.00   UART_3                                                                12/31/2014 18:02:57 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE UART_3
+OBJECT MODULE PLACED IN UART 3.OBJ
+COMPILER INVOKED BY: D:\Keil uVision C51\C51\BIN\C51.EXE UART 3.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <REG52.H>
+   2          
+   3          unsigned char code LedChar[]={0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,
+   4                                        0x7F,0x6F};
+   5          unsigned char LedBuff[]={0x3F,0x3F,0x3F};
+   6          
+   7          bit flag=0;
+   8          bit display=0;
+   9          unsigned char mov=1;
+  10          signed char i=2;
+  11          unsigned char rxd;
+  12          unsigned char T0RH;
+  13          unsigned char T0RL;
+  14          
+  15          void configure_timer0(int t);
+  16          void configure_uart(int baud);
+  17          void command1();
+  18          void command2();
+  19          
+  20          void main()
+  21          {
+  22   1        EA=1;
+  23   1        configure_uart(9600);
+  24   1        configure_timer0(2);
+  25   1        P1=0x08;
+  26   1        P0=LedBuff[i];
+  27   1        while(1)
+  28   1        {
+  29   2          if(flag)
+  30   2              {
+  31   3                flag=0;
+  32   3                command2();
+  33   3                if(display!=1)
+  34   3                {
+  35   4             command1();
+  36   4                }
+  37   3                else
+  38   3                {}
+  39   3              }
+  40   2        }
+  41   1      }
+  42          
+  43          
+  44          void configure_timer0(int t)
+  45          {
+  46   1        unsigned long temp;
+  47   1      
+  48   1        temp=11059200/12;
+  49   1        temp=(temp*t)/1000;
+  50   1        temp-=12;
+  51   1        temp=65536-temp;
+  52   1        T0RH=(unsigned char)(temp>>8);
+  53   1        T0RL=(unsigned char)temp;
+  54   1        TMOD&=0xF0;
+  55   1        TMOD|=0x01;
+C51 COMPILER V9.00   UART_3                                                                12/31/2014 18:02:57 PAGE 2   
+
+  56   1        TH0=T0RH;
+  57   1        TL0=T0RL;
+  58   1        TR0=0;
+  59   1        ET0=0;
+  60   1      }
+  61          
+  62          void configure_uart(int baud)
+  63          {
+  64   1        SCON=0x50;
+  65   1        TMOD&=0x0F;
+  66   1        TMOD|=0x20;
+  67   1        TH1=256-(11059200/32/12)/baud;
+  68   1        TL1=TH1;
+  69   1        ET1=0;
+  70   1        ES=1;
+  71   1        TR1=1;
+  72   1      }
+  73          
+  74          void right_mov()
+  75          {
+  76   1          unsigned char temp;     
+  77   1        
+  78   1          P0=0x00;
+  79   1              P1=P1<<mov;
+  80   1              temp=(P1<<4);
+  81   1              if((temp&0xFF)==0x00)
+  82   1          {
+  83   2                P1=0x02;
+  84   2              }
+  85   1              i++;
+  86   1              if(i>=3)
+  87   1              {
+  88   2                i=0;
+  89   2              }
+  90   1              P0=LedBuff[i];
+  91   1      }
+  92          
+  93          void left_mov()
+  94          {
+  95   1        unsigned char temp;
+  96   1      
+  97   1        P0=0x00;
+  98   1        P1=P1>>mov;
+  99   1        temp=P1&0x0E;
+ 100   1        if((temp&0xFF)==0x00)
+ 101   1        {
+ 102   2          P1=0x08;
+ 103   2        }
+ 104   1        i--;
+ 105   1        if(i<0)                 
+ 106   1        {
+ 107   2          i=2;
+ 108   2        }
+ 109   1        P0=LedBuff[i];
+ 110   1      }
+ 111          
+ 112          
+ 113          void command1()
+ 114          {
+ 115   1        switch(rxd)
+ 116   1        {
+ 117   2          case 0x30:LedBuff[i]=LedChar[0];P0=LedBuff[i];break;
+C51 COMPILER V9.00   UART_3                                                                12/31/2014 18:02:57 PAGE 3   
+
+ 118   2              case 0x31:LedBuff[i]=LedChar[1];P0=LedBuff[i];break;
+ 119   2              case 0x32:LedBuff[i]=LedChar[2];P0=LedBuff[i];break;
+ 120   2              case 0x33:LedBuff[i]=LedChar[3];P0=LedBuff[i];break;
+ 121   2              case 0x34:LedBuff[i]=LedChar[4];P0=LedBuff[i];break;
+ 122   2              case 0x35:LedBuff[i]=LedChar[5];P0=LedBuff[i];break;
+ 123   2              case 0x36:LedBuff[i]=LedChar[6];P0=LedBuff[i];break;
+ 124   2              case 0x37:LedBuff[i]=LedChar[7];P0=LedBuff[i];break;
+ 125   2              case 0x38:LedBuff[i]=LedChar[8];P0=LedBuff[i];break;
+ 126   2              case 0x39:LedBuff[i]=LedChar[9];P0=LedBuff[i];break;
+ 127   2              case 'a':left_mov();break; 
+ 128   2              case 's':right_mov();break;
+ 129   2              default:break;
+ 130   2        } 
+ 131   1      }
+ 132          
+ 133          void command2()
+ 134          {
+ 135   1        switch(rxd)
+ 136   1        {
+ 137   2          case 'd':TR0=1;ET0=1;display=1;break;
+ 138   2              case 'f':TR0=0;ET0=0;display=0;P0=0x00;P1=0x08;P0=LedBuff[2];i=2;break;
+ 139   2              default:break;
+ 140   2        }
+ 141   1      }
+ 142          
+ 143          void LedScan()
+ 144          { 
+ 145   1        static unsigned char j=0;
+ 146   1      
+ 147   1        P0=0x00;
+ 148   1        P1=0x08>>j;
+ 149   1        P0=LedBuff[2-j];
+ 150   1        j++;
+ 151   1        if(j>=3)
+ 152   1          j=0;
+ 153   1        
+ 154   1      }
+ 155          
+ 156          void interrupt_timer0() interrupt 1
+ 157          {
+ 158   1        TH0=T0RH;
+ 159   1        TL0=T0RL;
+ 160   1        LedScan();
+ 161   1      }
+ 162          
+ 163          void interruptUART() interrupt 4
+ 164          {
+ 165   1        if(RI)
+ 166   1        {
+ 167   2          RI=0;
+ 168   2              flag=1;
+ 169   2          rxd=SBUF;
+ 170   2              SBUF=rxd;
+ 171   2        }
+ 172   1        if(TI)
+ 173   1          TI=0;
+ 174   1      }
+ 175          
+ 176          
+ 177          
+ 178          
+ 179          
+C51 COMPILER V9.00   UART_3                                                                12/31/2014 18:02:57 PAGE 4   
+
+ 180          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    577    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      9       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

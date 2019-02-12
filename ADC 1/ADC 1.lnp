@@ -1,0 +1,6 @@
+"STARTUP.obj",
+"I2C.obj",
+"PCF.obj",
+"ADC 1.obj" 
+TO "ADC 1" 
+RAMSIZE(256) 

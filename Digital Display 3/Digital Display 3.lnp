@@ -1,0 +1,4 @@
+"STARTUP.obj",
+"Digital Display 3.obj" 
+TO "Digital Display 3" 
+RAMSIZE(256) 

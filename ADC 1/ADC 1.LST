@@ -1,0 +1,139 @@
+C51 COMPILER V9.00   ADC_1                                                                 01/26/2015 16:55:44 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE ADC_1
+OBJECT MODULE PLACED IN ADC 1.OBJ
+COMPILER INVOKED BY: D:\Keil uVision C51\C51\BIN\C51.EXE ADC 1.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <REG52.H>
+   2          #include<confi.h>
+   3          #include<I2C.h>
+   4          #include<PCF.h>
+   5          
+   6          void configure(unsigned int t);
+   7          void Tostring(unsigned char dat);
+   8          
+   9          unsigned char code LedChar[]={0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,
+  10                                        0x7F,0x6F};
+  11          unsigned char code LedChar_Dot[]={0xBF,0x86,0xDB,0xCF,0xE6,0xED,0xFD,0x87,
+  12                                          0xFF,0xEF};
+  13          unsigned char LedBuff[]={0x00,0x00,0x00};
+  14          
+  15          unsigned char T0H;
+  16          unsigned char T0L;
+  17          unsigned char dat;
+  18          bit flag=0;
+  19          
+  20          
+  21          
+  22          void main()
+  23          {
+  24   1        P0=0x00;
+  25   1        P1=0x00;
+  26   1        EA=1;
+  27   1        configure(2);
+  28   1        while(1)
+  29   1        {
+  30   2          if(flag)
+  31   2              {
+  32   3                flag=0;
+  33   3                dat=ADCread();
+  34   3                Tostring(dat);
+  35   3              }
+  36   2        }
+  37   1      }
+  38          
+  39          
+  40          void configure(unsigned int t)
+  41          {
+  42   1        unsigned long temp;
+  43   1      
+  44   1      
+  45   1        temp=11059200/12;
+  46   1        temp=(temp*t)/1000;
+  47   1        temp=65536-temp;
+  48   1        temp=temp+12;
+  49   1        T0H=(unsigned char)(temp>>8);
+  50   1        T0L=(unsigned char)temp;
+  51   1        TMOD=0x01;
+  52   1        TH0=T0H;
+  53   1        TL0=T0L;
+  54   1        ET0=1;
+  55   1        TR0=1;
+C51 COMPILER V9.00   ADC_1                                                                 01/26/2015 16:55:44 PAGE 2   
+
+  56   1      }
+  57          
+  58          void Tostring(unsigned char dat)
+  59          {
+  60   1        unsigned char one;
+  61   1        unsigned char two;
+  62   1        unsigned char thr;
+  63   1      
+  64   1        dat=(dat*250)/255;
+  65   1        thr=dat%10;
+  66   1        two=(dat/10)%10;
+  67   1        one=dat/100;
+  68   1        LedBuff[0]=LedChar_Dot[one];
+  69   1        LedBuff[1]=LedChar[two];
+  70   1        LedBuff[2]=LedChar[thr];
+  71   1      }
+  72          
+  73          void LedScan()
+  74          {
+  75   1        static unsigned char i=3;
+  76   1      
+  77   1        P0=0x00;
+  78   1        switch(i)
+  79   1        {
+  80   2          case 3:Led3=1;Led2=0;Led1=0;P0=LedBuff[2];i--;break;
+  81   2              case 2:Led2=1;Led1=0;Led3=0;P0=LedBuff[1];i--;break;
+  82   2              case 1:Led1=1;Led2=0;Led3=0;P0=LedBuff[0];i=3;break;
+  83   2              default:break;
+  84   2        }
+  85   1      }
+  86          
+  87          void interrupt_Timer0() interrupt 1
+  88          {
+  89   1         static unsigned char cnt=0;
+  90   1      
+  91   1         TH0=T0H;
+  92   1         TL0=T0L;
+  93   1         LedScan();
+  94   1         cnt++;
+  95   1         if(cnt>=50)
+  96   1         {
+  97   2           cnt=0;
+  98   2               flag=1;
+  99   2         }
+ 100   1      
+ 101   1      }
+ 102            
+ 103            
+ 104          
+ 105          
+ 106          
+ 107          
+ 108          
+ 109          
+ 110          
+ 111          
+ 112            
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    289    ----
+   CONSTANT SIZE    =     20    ----
+C51 COMPILER V9.00   ADC_1                                                                 01/26/2015 16:55:44 PAGE 3   
+
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      8       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
